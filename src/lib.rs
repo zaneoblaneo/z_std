@@ -3,8 +3,6 @@ pub mod string_view;
 pub mod quad_tree_f64;
 pub mod quad_tree_f32;
 
-pub mod arena_alloc;
-
 #[cfg(test)]
 mod tests {
     use std::io::Write;
