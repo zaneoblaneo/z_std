@@ -1,13 +1,12 @@
-use std::ops::{ Add, Sub };
 use std::cmp::Ordering;
 
 // This implementation was heavily based off of the pseudocode at
 // https://en.wikipedia.org/wiki/Quadtree
 
 #[derive(Debug, Clone, Copy)]
-struct Point {
-    x: f64,
-    y: f64,
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
 }
 
 impl From<(f64, f64)> for Point {
@@ -23,20 +22,20 @@ impl From<(i64, i64)> for Point {
 }
 
 impl Point {
-    fn new(x: impl Into<f64>, y: impl Into<f64>) -> Self {
+    pub fn new(x: impl Into<f64>, y: impl Into<f64>) -> Self {
         Self {
             x: x.into(),
             y: y.into(),
         }
     }
 
-    fn sqr_dist(&self, other: Self) -> f64 {
+    pub fn sqr_dist(&self, other: Self) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
         dx*dx + dy*dy
     }
 
-    fn dist(&self, other: Self) -> f64 {
+    pub fn dist(&self, other: Self) -> f64 {
         f64::sqrt(self.sqr_dist(other))
     }
 }
@@ -62,19 +61,19 @@ impl PartialOrd for Point {
 }
 
 #[derive(Debug, Clone, Copy)]
-struct CornerRect {
-    tl: Point,
-    br: Point,
+pub struct CornerRect {
+    pub tl: Point,
+    pub br: Point,
 }
 
 #[derive(Debug, Clone, Copy)]
-struct CenterSquare {
-    center: Point,
-    radius: f64,
+pub struct CenterSquare {
+    pub center: Point,
+    pub radius: f64,
 }
 
 impl CenterSquare {
-    fn contains_point(&self, point: Point) -> bool {
+    pub fn contains_point(&self, point: Point) -> bool {
         let bl = Point { 
             x: self.center.x - self.radius,
             y: self.center.y - self.radius,
@@ -86,7 +85,7 @@ impl CenterSquare {
         bl < point && point < tr
     }
 
-    fn corners(&self) -> CornerRect {
+    pub fn corners(&self) -> CornerRect {
         CornerRect {
             tl: Point::new(
                 self.center.x - self.radius, 
@@ -100,22 +99,22 @@ impl CenterSquare {
     }
 
     // This algo was stolen from https://www.javaspring.net/blog/how-do-i-see-if-two-rectangles-intersect-in-javascript-or-pseudocode/#the-proper-algorithm-checking-for-non-separation
-    fn intersects_center_square(&self, other: Self) -> bool {
+    pub fn intersects_center_square(&self, other: Self) -> bool {
         let s1 = self.corners();
         let s2 = other.corners();
         !((s1.br.x <= s2.tl.x) || (s1.tl.x >= s2.br.x) || (s1.br.y <= s2.tl.y) || (s1.tl.y >= s2.br.y))
     }
 }
 
-struct QuadTreeChildren {
-    nw: Option<Box<QuadTree>>,
-    ne: Option<Box<QuadTree>>,
-    sw: Option<Box<QuadTree>>,
-    se: Option<Box<QuadTree>>,
+pub struct QuadTreeChildren {
+    pub nw: Option<Box<QuadTree>>,
+    pub ne: Option<Box<QuadTree>>,
+    pub sw: Option<Box<QuadTree>>,
+    pub se: Option<Box<QuadTree>>,
 }
 
 impl QuadTreeChildren {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             nw: None,
             ne: None,
@@ -127,14 +126,14 @@ impl QuadTreeChildren {
 
 const QUAD_TREE_NODE_CAPACITY: usize = 4;
 
-struct QuadTree {
-    boundary: CenterSquare,
-    points: Vec<Point>,
-    children: QuadTreeChildren,
+pub struct QuadTree {
+    pub boundary: CenterSquare,
+    pub points: Vec<Point>,
+    pub children: QuadTreeChildren,
 }
 
 impl QuadTree {
-    fn new(boundary: CenterSquare) -> Self {
+    pub fn new(boundary: CenterSquare) -> Self {
         Self {
             boundary: boundary,
             points: Vec::new(),
@@ -142,7 +141,7 @@ impl QuadTree {
         }
     }
 
-    fn subdivide(&mut self) {
+    pub fn subdivide(&mut self) {
         assert!(self.children.nw.is_none());
         let nw_boundary = CenterSquare {
             center: Point {
@@ -180,7 +179,7 @@ impl QuadTree {
         }
     }
 
-    fn insert(&mut self, p: Point) -> bool {
+    pub fn insert(&mut self, p: Point) -> bool {
         if !self.boundary.contains_point(p) {
             return false;
         }
@@ -212,7 +211,7 @@ impl QuadTree {
         return false;
     }
 
-    fn query_range(&self, range: CenterSquare) -> Vec<Point> {
+    pub fn query_range(&self, range: CenterSquare) -> Vec<Point> {
         let mut out: Vec<Point> = Vec::new();
         if !self.boundary.intersects_center_square(range) {
             return out;
