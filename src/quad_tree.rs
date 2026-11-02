@@ -5,8 +5,20 @@ use std::cmp::Ordering;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
-    pub x: f32,
-    pub y: f32,
+    pub x: f64,
+    pub y: f64,
+}
+
+impl From<(f64, f64)> for Point {
+    fn from(i: (f64, f64)) -> Self {
+        Self::new(i.0, i.1)
+    }
+}
+
+impl From<(i64, i64)> for Point {
+    fn from(i: (i64, i64)) -> Self {
+        Self::new(i.0 as f64, i.1 as f64)
+    }
 }
 
 impl From<(f32, f32)> for Point {
@@ -22,21 +34,21 @@ impl From<(i32, i32)> for Point {
 }
 
 impl Point {
-    pub fn new(x: impl Into<f32>, y: impl Into<f32>) -> Self {
+    pub fn new(x: impl Into<f64>, y: impl Into<f64>) -> Self {
         Self {
             x: x.into(),
             y: y.into(),
         }
     }
 
-    pub fn sqr_dist(&self, other: Self) -> f32 {
+    pub fn sqr_dist(&self, other: Self) -> f64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
         dx*dx + dy*dy
     }
 
-    pub fn dist(&self, other: Self) -> f32 {
-        f32::sqrt(self.sqr_dist(other))
+    pub fn dist(&self, other: Self) -> f64 {
+        f64::sqrt(self.sqr_dist(other))
     }
 }
 
@@ -69,7 +81,7 @@ pub struct CornerRect {
 #[derive(Debug, Clone, Copy)]
 pub struct CenterSquare {
     pub center: Point,
-    pub radius: f32,
+    pub radius: f64,
 }
 
 impl CenterSquare {
@@ -106,14 +118,14 @@ impl CenterSquare {
     }
 }
 
-pub struct QuadTreeChildren<T> {
+pub struct QuadTreeChildren<T: Clone + Copy + Into<Point>> {
     pub nw: Option<Box<QuadTree<T>>>,
     pub ne: Option<Box<QuadTree<T>>>,
     pub sw: Option<Box<QuadTree<T>>>,
     pub se: Option<Box<QuadTree<T>>>,
 }
 
-impl<T> QuadTreeChildren<T> {
+impl<T: Clone + Copy + Into<Point>> QuadTreeChildren<T> {
     pub fn new() -> Self {
         Self {
             nw: None,
@@ -126,14 +138,14 @@ impl<T> QuadTreeChildren<T> {
 
 const QUAD_TREE_NODE_CAPACITY: usize = 4;
 
-pub struct QuadTree<T> {
+pub struct QuadTree<T: Clone + Copy + Into<Point>> {
     pub boundary: CenterSquare,
     pub points: Vec<Point>,
     pub data: Vec<T>,
     pub children: QuadTreeChildren<T>,
 }
 
-impl<T> QuadTree<T> {
+impl<T: Clone + Copy + Into<Point>> QuadTree<T> {
     pub fn new(boundary: CenterSquare) -> Self {
         Self {
             boundary: boundary,
@@ -147,31 +159,31 @@ impl<T> QuadTree<T> {
         assert!(self.children.nw.is_none());
         let nw_boundary = CenterSquare {
             center: Point {
-                x: self.boundary.center.x - (self.boundary.radius / 2f32),
-                y: self.boundary.center.y + (self.boundary.radius / 2f32),
+                x: self.boundary.center.x - (self.boundary.radius / 2f64),
+                y: self.boundary.center.y + (self.boundary.radius / 2f64),
             },
-            radius: self.boundary.radius / 2f32,
+            radius: self.boundary.radius / 2f64,
         };
         let ne_boundary = CenterSquare {
             center: Point {
-                x: self.boundary.center.x + (self.boundary.radius / 2f32),
-                y: self.boundary.center.y + (self.boundary.radius / 2f32),
+                x: self.boundary.center.x + (self.boundary.radius / 2f64),
+                y: self.boundary.center.y + (self.boundary.radius / 2f64),
             },
-            radius: self.boundary.radius / 2f32,
+            radius: self.boundary.radius / 2f64,
         };
         let sw_boundary = CenterSquare {
             center: Point {
-                x: self.boundary.center.x - (self.boundary.radius / 2f32),
-                y: self.boundary.center.y - (self.boundary.radius / 2f32),
+                x: self.boundary.center.x - (self.boundary.radius / 2f64),
+                y: self.boundary.center.y - (self.boundary.radius / 2f64),
             },
-            radius: self.boundary.radius / 2f32,
+            radius: self.boundary.radius / 2f64,
         };
         let se_boundary = CenterSquare {
             center: Point {
-                x: self.boundary.center.x + (self.boundary.radius / 2f32),
-                y: self.boundary.center.y - (self.boundary.radius / 2f32),
+                x: self.boundary.center.x + (self.boundary.radius / 2f64),
+                y: self.boundary.center.y - (self.boundary.radius / 2f64),
             },
-            radius: self.boundary.radius / 2f32,
+            radius: self.boundary.radius / 2f64,
         };
         self.children = QuadTreeChildren::<T> {
             nw: Some(Box::new(QuadTree::<T>::new(nw_boundary))),
@@ -181,13 +193,13 @@ impl<T> QuadTree<T> {
         }
     }
 
-    pub fn insert(&mut self, p: Point, data: T) -> bool {
-        if !self.boundary.contains_point(p) {
+    pub fn insert(&mut self, p: T) -> bool {
+        if !self.boundary.contains_point(p.into()) {
             return false;
         }
 
         if self.points.len() < QUAD_TREE_NODE_CAPACITY && self.children.nw.is_none() {
-            self.points.push(p);
+            self.points.push(p.into());
             return true;
         }
 
@@ -198,16 +210,16 @@ impl<T> QuadTree<T> {
         // assume that if self.subdivide has been called, all children are 
         // populated.
 
-        if self.children.nw.as_mut().unwrap().insert(p, data) { 
+        if self.children.nw.as_mut().unwrap().insert(p) { 
             return true; 
         }
-        if self.children.ne.as_mut().unwrap().insert(p, data) {
+        if self.children.ne.as_mut().unwrap().insert(p) {
             return true;
         }
-        if self.children.sw.as_mut().unwrap().insert(p, data) {
+        if self.children.sw.as_mut().unwrap().insert(p) {
             return true;
         }
-        if self.children.se.as_mut().unwrap().insert(p, data) {
+        if self.children.se.as_mut().unwrap().insert(p) {
             return true;
         }
         return false;

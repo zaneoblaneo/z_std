@@ -6,15 +6,52 @@ pub mod quad_tree_f32;
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
-    use super::quad_tree_f32::{ CenterSquare, Point, QuadTree };
+    use super::quad_tree::{ CenterSquare, Point, QuadTree };
+
+    #[derive(Debug, Clone, Copy)]
+    struct Vec2 {
+        pub _x: f32,
+        pub _y: f32,
+    }
+
+    impl From<(f32, f32)> for Vec2 {
+        fn from(tup: (f32, f32)) -> Self {
+            Self {
+                _x: tup.0,
+                _y: tup.1,
+            }
+        }
+    }
+
+    #[derive(Debug, Clone, Copy)]
+    struct Ball {
+        _pos: Point,
+        _vel: Vec2,
+        _acc: Vec2,
+    }
+
+    impl Into<Point> for Ball {
+        fn into(self) -> Point {
+            self._pos
+        }
+    }
+
+    impl From<(i32, i32)> for Ball {
+        fn from(tup: (i32, i32)) -> Self {
+            Self {
+                _pos: tup.into(),
+                _vel: (1f32, 1f32).into(),
+                _acc: (0f32, 0f32).into(),
+            }
+        }
+    }
 
     #[test]
-    fn quad_tree_f32_test() {
-        let mut qt: QuadTree = QuadTree::new(
+    fn quad_tree_test() {
+        let mut qt: QuadTree<Ball> = QuadTree::new(
             CenterSquare { 
-                center: Point::new(0f32, 0f32), 
-                radius: 14f32 
+                center: Point::new(0f64, 0f64), 
+                radius: 14f64 
             }
         );
         qt.insert((9, 14).into());
@@ -37,8 +74,8 @@ mod tests {
         qt.insert((8, 3).into());
 
         let out = qt.query_range(CenterSquare {
-            center: (7f32, 7f32).into(),
-            radius: 7f32,
+            center: (7f64, 7f64).into(),
+            radius: 7f64,
         });
         assert_eq!(format!("{out:?}"), "[Point { x: 8.0, y: 6.0 }, Point { x: 1.0, y: 1.0 }, Point { x: 8.0, y: 3.0 }]");
     }
