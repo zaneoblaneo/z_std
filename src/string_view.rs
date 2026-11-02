@@ -304,7 +304,7 @@ mod tests {
 	#[test]
 	fn test_chop_by_delim() {
 		let mut sv = StringView::from_str("\r\n\t You lost the game \t\n\r");
-		let chop = sv.chop_by_delim(' ');
+		let _chop = sv.chop_by_delim(' ');
 		let chop2 = sv.chop_by_delim(' ');
 		let cmp = StringView::from_str("You");
 		assert_eq!(chop2, cmp);
