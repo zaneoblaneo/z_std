@@ -1,5 +1,6 @@
 pub mod string_view;
 
+pub mod quad_tree;
 pub mod quad_tree_f64;
 pub mod quad_tree_f32;
 
